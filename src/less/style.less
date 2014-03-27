@@ -1,0 +1,184 @@
+.nowrap() {
+    overflow: hidden;
+    -ms-text-overflow: ellipsis;
+    text-overflow: ellipsis;
+    white-space: nowrap;  
+}
+
+.dropdown-pills {
+    position: relative;
+    display: inline-block;
+    min-width: 156px;
+    max-width: 250px;
+    
+    .dropdown-pills-container {
+        ul {
+            margin: 0;
+            padding: 0;
+            text-align: right;
+            display: inline-block;
+            vertical-align: top;
+            font-size: 0px;
+            letter-spacing: 0px;
+            word-spacing: 0px;
+            line-height: initial;
+            padding: 4px;
+            .nowrap();
+
+            li {
+                position: relative;
+                list-style: none;
+                display: inline-block;
+                
+                &.pills {
+                    margin-left: 5px;
+                    &:first-child {margin-left: 0px;}
+                    a {
+                        text-align: left;
+                        display: block;
+                        font-size: 12px;
+                        line-height: 14px;
+                        text-decoration: underline;
+                        max-width: 55px;
+                        padding: 2px 0px 2px 8px;
+                        border-radius: 4px;
+                        .nowrap();
+                    }
+
+                    &:hover > span { display: block; }
+                    span {
+                        display: none;
+                        position: absolute;
+                        left: -3px;
+                        top: 2px;
+                        background-color: #ddd;
+                        cursor: pointer;
+                        border-radius: 8px;
+                        width: 10px;
+                        height: 10px;
+                        &:hover { background-color: #aaa; }
+                        &:active { background-color: #ddd; }
+                    }
+                }
+            }
+        }
+
+        button {
+            color: #ffffff;
+            text-align: center;
+            outline: 0;
+            display: inline-block;
+            border: 1px solid rgba(0,0,0,0.5);
+            background-color: rgba(0,0,0,0.3);
+            -webkit-border-radius: 3px;
+            border-radius: 3px;
+            display: inline-block;
+            text-decoration: none;
+            vertical-align: top;
+            font-size: 14px;
+            line-height: 16px;
+            box-shadow: 
+                0 1px 1px rgba(0,0,0,0.5),
+                inset 0 1px rgba(255,255,255,0.3),
+                inset 0 10px rgba(255,255,255,0.2),
+                inset 0 10px 20px rgba(255,255,255,0.25),
+                inset 0 -15px 30px rgba(0,0,0,0.3);
+            &:hover {
+                background-color: rgba(0,0,0,0.2);
+            }
+        }
+    }
+    
+    .dropdown-pill-dialog {
+        border: 1px solid #ccc;
+        box-shadow: 0 0 15px rgba(0,0,0,0.5);
+        position: absolute;
+        top: 30px;
+        width: 244px;
+        .arrow-top-bg {
+            border-color: rgba(0, 0, 0, 0);
+            border-bottom-color: #ccc;
+            border-style: dashed dashed solid;
+            border-width: 0 8px 8px;
+            display: block;
+            position: absolute;
+            right: 7px;
+            top: -8px;
+            z-index: 1;
+            height: 0px;
+            width: 0px;
+        }
+        .arrow-top {
+            border-color: rgba(0, 0, 0, 0);
+            border-bottom-color: #f8f8f8;
+            border-style: dashed dashed solid;
+            border-width: 0 8px 8px;
+            display: block;
+            position: absolute;
+            right: 7px;
+            top: -7px;
+            z-index: 2;
+            height: 0px;
+            width: 0px;
+        }
+    }
+
+    ul.dropdown-pill-list {
+        margin: 0;
+        padding: 10px;
+        border-bottom: 1px solid #ccc;
+        border-top: 1px solid #ccc;
+        background-color: #fff;
+        max-height: 112px;
+        overflow-y: auto;
+        li {
+            list-style: none;
+            a {
+                padding: 4px 4px;
+                display: block;
+                text-decoration: none;
+                color: black;
+                .nowrap();
+                &:hover {
+                    text-decoration: none;
+                    color: black;
+                }
+                input {
+                    margin: 0;
+                }
+            }
+        }
+
+        &.disabled {
+            li > a {color: #c6c6c6;}
+        }
+    }
+    .button-group {
+        background-color: #f8f8f8;
+        padding: 10px;
+        .button {
+            display: inline-block;
+            padding: 5px 15px;
+            text-decoration: none;
+            color: black;
+            background: #f8f8f8;
+            border: 1px solid #c6c6c6;
+            -webkit-border-radius: 2px;
+            border-radius: 2px;
+            margin-right: 90px;
+            &:hover {
+                background-color: #f0f0f0;
+                text-decoration: none;
+            }
+            &:last-child { margin-right: 0;}
+            &.green {
+                background-color: #72c139;
+                border: none;
+                padding: 5px 16px;
+                color: white;
+                &:hover {background-color: #68b133;}
+            }
+        }
+    }
+}
+

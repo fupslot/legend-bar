@@ -1,0 +1,7 @@
+$(function () {
+    var settings;
+
+    
+    settings = {
+    };
+});
