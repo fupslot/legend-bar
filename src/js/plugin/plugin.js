@@ -120,10 +120,11 @@
             // Draws a legend
             checkedList = this._getCheckedList(this.list);
             this._drawLegend(checkedList);
-            
+
             this.$el
                 .find('.dropdown-pill-dialog')
                 .removeClass('open');
+            this.$el.trigger('select', [checkedList]);
         },
 
         _createCollection: function () {
@@ -165,6 +166,13 @@
             containerEl = this.$el.find('.dropdown-pills-container');
             containerEl.find('ul.legend').remove();
             
+            // Always fron greenish to yellowish
+            list.sort(function (a, b) {
+                if (a.colorIndex < b.colorIndex) return -1;
+                if (a.colorIndex > b.colorIndex) return 1;
+                return 0;
+            });
+
             // The legend
             if (list.length === 0) return;
             listEl = $('<ul>').addClass('legend');
@@ -173,14 +181,13 @@
                     .addClass('pill')
                     .append($('<span>')
                         .addClass('pill-color')
-                        .addClass(getColorNameByIndex(index)))
+                        .addClass(getColorNameByIndex(item.colorIndex)))
                     .append($('<a>')
                         .attr('href', 'javascript:void 0;')
                         .text(item.name))
                     .appendTo(listEl);
             });
             containerEl.append(listEl);
-
             this.$el.append(containerEl);
         },
 
@@ -246,10 +253,6 @@
                     .text('Cancel'))
                 .appendTo(dialogEl);
             self.$el.append(dialogEl);
-        },
-
-        _refreshList: function () {
-            
         },
 
         _refreshListStatus: function () {
