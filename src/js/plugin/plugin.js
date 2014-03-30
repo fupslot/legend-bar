@@ -6,27 +6,37 @@
 
     defaults = {
         names: [],
-        highlighted: []
+        highlighted: [],
+        checked: []
     };
 
     function _init () {
-        var self;
+        var self, checkedList;
 
         self = this;
 
         if (this.el.tagName !== 'DIV') throw Error('Dropdown. Error: The root element must be an DIV element');
 
+        this.list = this._createCollection();
+        console.log(this.list);
+
         // Hide element. Privents blinking on slow machines.
         this.$el
             .addClass('dropdown-pills')
-            .css('display', 'none');
+            .css('display', 'none')
+            .append($('<div>')
+                .addClass('dropdown-pills-container'));
+        
+        this._drawOptionButton();
 
         // Draws a legend
-        _drawLegend.call(self, self.options.highlighted);
-        // Draws a dialog
-        _drawDialog.call(self);
+        checkedList = this._getCheckedList(this.list);
+        this._drawLegend(checkedList);
 
-        _updateDialogHeader.call(self);
+        // Draws a dialog
+        this._drawDialog();
+
+        this._updateDialogHeader();
         // Show element
         this.$el.fadeIn();
     }
@@ -35,209 +45,11 @@
         return ['greenish', 'redish'][index] || 'yellowish';
     }
 
-    function _drawLegend (indexes) {
-        var self
-          , containerEl
-          , ulEl;
-
-        self = this;
-        containerEl = $('<div>')
-            .addClass('dropdown-pills-container');
-        
-        if (indexes.length > 0) {
-            ulEl = $('<ul>');
-            indexes.forEach(function (idx, i) {
-                $('<li>')
-                    .addClass('pill')
-                    .append($('<span>')
-                        .addClass('pill-color')
-                        .addClass(getColorNameByIndex(i)))
-                    .append($('<a>')
-                        .attr('href', 'javascript:void 0;')
-                        .text(self.options.names[idx]))
-                    .appendTo(ulEl);
-            });
-            containerEl.append(ulEl);
+    function buttonClickEventHandler (method) {
+        return function (e) {
+            e.stopPropagation();
+            this[method]();
         }
-        $('<ul>')
-            .addClass('options')
-            .append('<li>','<li>','<li>')
-            .appendTo(containerEl)
-            .on('click', function (e) {
-                e.stopPropagation();
-                self.open();
-            });
-        $(document).on('click', function () {
-            self.cancel();
-        });
-        this.$el.append(containerEl);
-    }
-
-    function _drawDialog () {
-        var self
-          , dialogEl
-          , bodyEl;
-
-        self = this;
-        dialogEl   = $('<div>').addClass('dropdown-pill-dialog');
-        dialogEl.append($('<div>').addClass('arrow-top-bg'))
-        dialogEl.append($('<div>').addClass('arrow-top'))
-
-        // Header
-        dialogEl.append($('<div>')
-            .addClass('dialog-group')
-            .addClass('dialog-group-title'));
-        
-        // Body
-        bodyEl = $('<ul>')
-            .addClass('dropdown-pill-list')
-            .addClass(function () {
-                return self.options.highlighted.length === 3 ? 'disabled' : '';
-            });
-        self.options.names.forEach(function (name, i) {
-            $('<li>')
-                .append($('<a>')
-                    .addClass(function () {
-                        return self.isHighlighted(i) ? 'highlighted' : '';
-                    })
-                    .attr('href', 'javascript:void 0;')
-                    .append($('<span>')
-                        .addClass('pill-color')
-                        .addClass(function () {
-                            var colorIndex = self.options.highlighted.indexOf(i);
-                            return self.isHighlighted(i) ? getColorNameByIndex(colorIndex) : '';
-                        }))
-                    .append($('<span>').text(name))
-                    .on('click', function (e) {
-                        e.stopPropagation();
-                        if (bodyEl.hasClass('disabled') && !$(this).hasClass('highlighted')) return;
-
-                        _highlight.call(self, i);
-                    }))
-                .appendTo(bodyEl);
-        });
-        dialogEl.append(bodyEl);
-
-        // Footer
-        $('<div>').addClass('dialog-group dialog-group-footer')
-            .append($('<a>')
-                .attr('href', 'javascript:void 0;')
-                .addClass('button button-disabled')
-                .text('Save'))
-            .append($('<a>')
-                .attr('href', 'javascript:void 0;')
-                .addClass('button')
-                .on('click', $.proxy(function () {
-                    this.cancel();
-                }, this))
-                .text('Cancel'))
-            .appendTo(dialogEl);
-        self.$el.append(dialogEl);
-    }
-
-    function _highlight (index) {
-        var slice
-          , bodyEl
-          , aEl
-          , colorIndex
-          , colorName;
-        
-        bodyEl = this.$el.find('.dropdown-pill-list');
-
-        colorIndex = this._highlighted.indexOf(index);
-
-        // The limit is reached
-        if (colorIndex == -1 && _cannotHighlight.call(this)) return;
-
-        if (bodyEl.hasClass('disabled')) bodyEl.removeClass('disabled');
-        
-        aEl = this.$el.find('.dropdown-pill-list a').eq(index);
-
-        // An item is highlighted already
-        if (colorIndex !== -1) {
-            this._highlighted[colorIndex] = -1;
-            
-            _unHighlightItem.call(this, index);
-        }
-        else {
-            colorIndex = this._highlighted.indexOf(-1) !== -1 ? this._highlighted.indexOf(-1) : this._highlighted.length;
-            this._highlighted[colorIndex] = index;
-            colorName = getColorNameByIndex(colorIndex);
-
-            _highlightItem.call(this, index, colorName);
-        }
-
-        _updateDialogHeader.call(this);
-
-        if (_isChangeMade.call(this)) {
-            _highlightSaveButton.call(this);
-        }
-        else {
-            _unHighlightSaveButton.call(this);
-        }
-
-        if (_cannotHighlight.call(this)) {
-            bodyEl.addClass('disabled');
-        }
-    }
-
-    function _updateDialogHeader() {
-        var source, message, count;
-        source = this._highlighted || this.options.highlighted;
-        
-        count = 0;
-        source.forEach(function (i) {
-            count += i !== -1 ? 1 : 0;
-        });
-        
-        message = ['You have 3 items to choice', 'You have 2 items left to choice', 'One more item'][count] || 'Limit reached';
-        this.$el.find('.dialog-group-title').text(message);
-    }
-
-    function _unHighlightItem (index) {
-        this.$el
-            .find('.dropdown-pill-list a')
-            .eq(index)
-            .removeClass('highlighted')
-            .find('.pill-color')
-            .removeClass('greenish redish yellowish');
-    }
-
-    function _highlightItem (index, colorName) {
-        this.$el
-            .find('.dropdown-pill-list a')
-            .eq(index)
-            .addClass('highlighted')
-            .find('.pill-color')
-            .addClass(colorName);
-    }
-
-    function _highlightSaveButton () {
-        this.$el
-            .find('.dialog-group-footer .button')
-            .first()
-            .removeClass('button-disabled')
-            .addClass('green');
-    }
-
-    function _unHighlightSaveButton () {
-        this.$el
-            .find('.dialog-group-footer .button')
-            .first()
-            .addClass('button-disabled')
-            .removeClass('green');
-    }
-
-    function _cannotHighlight () {
-        return this._highlighted.length === 3 && this._highlighted.indexOf(-1) === -1;
-    }
-
-    function _isChangeMade () {
-        var self, result;
-        self = this;
-        return !this.options.highlighted.every(function (a,i) {
-            return self._highlighted && self._highlighted[i] === a;
-        });
     }
 
     function Plugin (el, options) {
@@ -262,32 +74,288 @@
             return this.options.highlighted.indexOf(i) !== -1;
         },
 
+        isLimitReached: function () {
+            var count = 0;
+            this.list.forEach(function (item) {
+                if (item.checked) count++;
+            });
+            return count >= 3;
+        },
+
         open: function () {
-            var slice = Array.prototype.slice;
-            if (!this._highlighted) this._highlighted = slice.call(this.options.highlighted);
+            this._list = $.extend(true, [], this.list);
+            console.log(this.list);
             this.$el
                 .find('.dropdown-pill-dialog')
                 .addClass('open');
         },
 
         cancel: function () {
-            var slice = Array.prototype.slice;
-            this._highlighted = slice.call(this.options.highlighted);
+            var self = this;
 
-            this.options.names.forEach($.proxy(function (n, index) {
-                if (this._highlighted.indexOf(index) !== -1) {
-                    _highlight.call(this, index);
-                } 
-                else {
-                    _unHighlightItem.call(this, index);
-                }
-            }, this));
-            
-            delete this._highlighted;
+            if (!this._list) return;
+
+            // this.list = Array.prototype.slice.call(this._list);
+            this.list = $.extend(true, [], this._list);
+            delete this._list;
+
+            this.list.forEach(function (item, index) {
+                self._refreshItem(item, index);
+            });
+
+            this._updateDialogHeader();
+            this._unHighlightSaveButton();
+            this._refreshListStatus();
 
             this.$el
                 .find('.dropdown-pill-dialog')
                 .removeClass('open');
+        },
+
+        save: function () {
+            var checkedList;
+
+            delete this._list;
+            
+            // Draws a legend
+            checkedList = this._getCheckedList(this.list);
+            this._drawLegend(checkedList);
+            
+            this.$el
+                .find('.dropdown-pill-dialog')
+                .removeClass('open');
+        },
+
+        _createCollection: function () {
+            return this.options.names.map($.proxy(function (name, i) {
+                var colorIndex, checked;
+                colorIndex = this.options.checked.indexOf(i);
+                checked = colorIndex !== -1;
+                return {index:i, name:name, checked:checked, colorIndex: colorIndex};
+            },this));
+        },
+
+        _drawOptionButton: function () {
+            var self, containerEl;
+
+            self = this;
+            containerEl = this.$el.find('.dropdown-pills-container');
+
+            $('<ul>')
+                .addClass('options')
+                .append('<li>','<li>','<li>')
+                .on('click', function (e) {
+                    e.stopPropagation();
+                    self.open();
+                })
+                .appendTo(containerEl);
+            $(document).on('click', function (e) {
+                e.stopPropagation();
+                self.cancel();
+            });
+        },
+
+        _drawLegend: function (list) {
+            var self
+              , containerEl
+              , listEl;
+
+            self = this;
+            
+            containerEl = this.$el.find('.dropdown-pills-container');
+            containerEl.find('ul.legend').remove();
+            
+            // The legend
+            if (list.length === 0) return;
+            listEl = $('<ul>').addClass('legend');
+            list.forEach(function (item, index) {
+                $('<li>')
+                    .addClass('pill')
+                    .append($('<span>')
+                        .addClass('pill-color')
+                        .addClass(getColorNameByIndex(index)))
+                    .append($('<a>')
+                        .attr('href', 'javascript:void 0;')
+                        .text(item.name))
+                    .appendTo(listEl);
+            });
+            containerEl.append(listEl);
+
+            this.$el.append(containerEl);
+        },
+
+        _drawDialog: function () {
+            var self
+              , dialogEl
+              , bodyEl;
+
+            self = this;
+
+            self.$el.find('.dropdown-pill-dialog').remove();
+
+            dialogEl = $('<div>').addClass('dropdown-pill-dialog');
+            dialogEl.append($('<div>').addClass('arrow-top-bg'))
+            dialogEl.append($('<div>').addClass('arrow-top'))
+
+            // Header
+            dialogEl.append($('<div>')
+                .addClass('dialog-group')
+                .addClass('dialog-group-title'));
+            
+            // Body
+            bodyEl = $('<ul>')
+                .addClass('dropdown-pill-list')
+                .addClass(function () {
+                    return self.isLimitReached() ? 'disabled' : '';
+                });
+            
+            self.list.forEach(function (item, i) {
+                $('<li>')
+                    .append($('<a>')
+                        .addClass(function () {
+                            return item.checked ? 'highlighted' : '';
+                        })
+                        .attr('href', 'javascript:void 0;')
+                        .append($('<span>')
+                            .addClass('pill-color')
+                            .addClass(function () {
+                                return item.checked ? getColorNameByIndex(item.colorIndex) : '';
+                            }))
+                        .append($('<span>').text(item.name))
+                        .on('click', function (e) {
+                            e.stopPropagation();
+                            if (bodyEl.hasClass('disabled') && !$(this).hasClass('highlighted')) return;
+
+                            self._checked(i);
+                        }))
+                    .appendTo(bodyEl);
+            });
+            dialogEl.append(bodyEl);
+
+            // Footer
+            $('<div>').addClass('dialog-group dialog-group-footer')
+                .append($('<a>')
+                    .attr('href', 'javascript:void 0;')
+                    .addClass('button button-disabled')
+                    .on('click', $.proxy(buttonClickEventHandler('save'), self))
+                    .text('Save'))
+                .append($('<a>')
+                    .attr('href', 'javascript:void 0;')
+                    .addClass('button')
+                    .on('click', $.proxy(buttonClickEventHandler('cancel'), self))
+                    .text('Cancel'))
+                .appendTo(dialogEl);
+            self.$el.append(dialogEl);
+        },
+
+        _refreshList: function () {
+            
+        },
+
+        _refreshListStatus: function () {
+            var bodyEl = this.$el.find('.dropdown-pill-list');
+            if (this.isLimitReached()) {
+                bodyEl.addClass('disabled');
+            }
+            else {
+                bodyEl.removeClass('disabled');
+            }
+        },
+
+        _checked: function (index) {
+            var item;
+
+            item = this.list[index];
+
+            // The limit is reached
+            if (!item.checked && this.isLimitReached()) return;
+
+            if (item.checked) {
+                item.colorIndex = -1;
+                item.checked = false;
+            }
+            else {
+                item.colorIndex = this.getNextColorIndex();
+                item.checked = true;
+            }
+
+            this._refreshItem(item, index);
+
+            this._updateDialogHeader();
+
+            this._highlightSaveButton();
+
+            this._refreshListStatus();
+        },
+
+        getNextColorIndex: function () {
+            var i, l, list, indexList, index;
+
+            indexList = [];
+            list = this._getCheckedList(this.list);
+            
+            list.forEach(function (item) {
+                indexList.push(item.colorIndex);
+            });
+
+            indexList.sort();
+
+            i = 0;
+            l = indexList.length;
+            for(; i < 3; i++) {
+                if (i !== indexList[i]) {
+                    index = i;
+                    break;
+                }
+            }
+            return index;
+        },
+
+        _updateDialogHeader: function () {
+            var list, message;
+            list = this._getCheckedList(this.list);
+            
+            message = ['You have 3 items to choice', 'You have 2 items left to choice', 'One more item'][list.length] || 'Limit reached';
+            this.$el.find('.dialog-group-title').text(message);
+        },
+
+        _refreshItem: function (item, index) {
+            var linkEl;
+            linkEl = this.$el.find('.dropdown-pill-list a').eq(index);
+            linkEl.removeClass('highlighted')
+                .find('.pill-color')
+                .removeClass('greenish redish yellowish');
+
+            linkEl
+                .addClass(function () {
+                    return item.checked ? 'highlighted' : '';
+                })
+                .find('.pill-color')
+                .addClass(function () {
+                    return item.checked ? getColorNameByIndex(item.colorIndex) : '';
+                });
+        },
+
+        _highlightSaveButton: function () {
+            this.$el
+                .find('.dialog-group-footer .button')
+                .first()
+                .removeClass('button-disabled')
+                .addClass('green');
+        },
+
+        _unHighlightSaveButton: function () {
+            this.$el
+                .find('.dialog-group-footer .button')
+                .first()
+                .addClass('button-disabled')
+                .removeClass('green');
+        },
+
+        _getCheckedList: function (list) {
+            return list.filter(function (item) {
+                return !!item.checked;
+            });
         }
     };
 
