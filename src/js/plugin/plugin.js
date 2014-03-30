@@ -1,309 +1,243 @@
 ;(function($, window, document, undefined) {
     'use strict';
 
-    var pluginName = 'FunnelViz'
+    var pluginName = 'DropdownPills'
       , defaults;
 
     defaults = {
-        compare:   true,
-        breakdown: false,
-        showBreakdownConversion: false,
-        allowHighlight: true,
-        events:    [],
-        labels:    [],
-        sections:  [],
-        barColorName: 'blue'
+        names: [],
+        highlighted: []
     };
 
-    function init () {
-        var self
-          , sections
-          , bl
-          , breakdownClazz;
+    function _init () {
+        var self;
 
         self = this;
 
-        if (this.el.tagName !== 'UL') throw Error('FunnelViz. Error: The root element must be an UL element');
+        if (this.el.tagName !== 'DIV') throw Error('Dropdown. Error: The root element must be an DIV element');
 
-        if (this.isBreakdown()) {
-            breakdownClazz = 'breakdown ';
-            bl = this.options.breakdown.length;
-            // Three is the max. From the design point of view.
-            breakdownClazz += ['one', 'two'][bl - 1] || 'three';
-        }
-        
         // Hide element. Privents blinking on slow machines.
         this.$el
-            .addClass('fun-container')
-            .addClass(breakdownClazz)
+            .addClass('dropdown-pills')
             .css('display', 'none');
 
-        sections = this.options.sections;
+        // Draws a legend
+        _drawLegend.call(self, self.options.highlighted);
+        // Draws a dialog
+        _drawDialog.call(self);
 
-        // Convert settings to a convenient structure
-        this._events = transformData2FunnelVizFormat(this.options);
-
-        // console.log(this.options); // !!!
-        // console.log(this._events); // !!! 
-        
-        // Draw an event
-        this._events.forEach($.proxy(drawColumn, this));
-        
+        _updateDialogHeader.call(self);
         // Show element
         this.$el.fadeIn();
     }
 
-    function drawColumn (model, index) {
-        var events
-          , columnEl;
-
-        events = model.events;
-
-        columnEl = $('<li>')
-            .addClass('fun-column')
-            .append($('<div>')
-                .addClass('fun-event-name')
-                .attr('title', model.name)
-                .text(model.name));
-
-        if (this.isBreakdown()) {
-            // Draw a breakdown
-            drawBreakdown.call(this, columnEl, model, index);
-        }
-        else {
-            // Draw a bar
-            drawBar.call(this, columnEl, model, index);
-        }
-
-        // Draw panels
-        var panels = ['actual'];
-        if (this.options.compare) panels.push('compare');
-        
-        panels.forEach($.proxy(function (val) {
-            drawPanelValue.call(this, columnEl, model, index, val === 'compare');
-        }, this));
-
-        this.$el.append(columnEl);
+    function getColorNameByIndex (index) {
+        return ['greenish', 'redish'][index] || 'yellowish';
     }
 
-    function drawBreakdown (el, model, columnIndex) {
-        var barEl
-          , sections;
-        
-        barEl = $('<ul>').addClass('fun-bar');
-
-        sections = this.options.breakdown;
-
-        sections.forEach($.proxy(function (sectionIndex, index) {
-            var el, section;
-            
-            section = model.sections[sectionIndex];
-            if (!section) return;
-
-            el = $('<li>');
-            drawBar.call(this, el, section, columnIndex, index);
-            el.appendTo(barEl);
-        }), this);
-
-        el.append(barEl);
-    }
-
-    function drawBar(el, model, columnIndex, index) {
+    function _drawLegend (indexes) {
         var self
-          , labelOrientation
-          , isFirst
-          , onHighlightEvent;
-
-        self    = this;
-        isFirst = columnIndex === 0;
-
-        labelOrientation = this.isBreakdown() ? 'verticaly' : 'horizontaly';
-
-        onHighlightEvent = function (e) {
-            var el;
-            el = $(e.currentTarget).toggleClass('highlighted');
-            
-            if (el.hasClass('highlighted')) {
-                // addHighlighted()
-            }
-            else {
-                // removeHighlighted()
-            }
-        };
-
-        $('<div>')
-            .addClass('fun-bar-value')
-            .addClass(getBarColor.call(this, index))
-            .append($('<div>')
-                .addClass('fun-bar-value-top')
-                .attr('role', 'bar')
-                .css('top', model.GHBar+'%')
-                .on('click', onHighlightEvent))
-            .append($('<div>')
-                .addClass('fun-bar-value-bottom')
-                .addClass('fun-label')
-                .addClass(labelOrientation)
-                .attr('role', 'bar')
-                .attr('title', function(){
-                    var title, conv;
-                    conv  = numeral(model.conversion).format('0.0') + '%';
-                    title = isFirst ? model.name : model.name + '\r\n' + model.value + ' / ' + conv;
-                    return title;
-                })
-                .attr('data-value', model.value)
-                .attr('data-conv', function() {
-                    if (self.options.showBreakdownConversion) {
-                        return isFirst ? '' : ' / ' + numeral(model.conversion).format('0.0') + '%';
-                    }
-                })
-                .css('top', model.HBar+'%')
-                .on('click', onHighlightEvent))
-            .appendTo(el);
-    }
-
-    function drawPanelValue (el, model, columnIndex, isCompare) {
-        var self
-          , overallClazz
-          , isOverall;
+          , containerEl
+          , ulEl;
 
         self = this;
-        isOverall = columnIndex == 0;
+        containerEl = $('<div>')
+            .addClass('dropdown-pills-container');
         
-        overallClazz = isOverall ? 'overall' : '';
-
-        $('<div>')
-            .addClass('fun-panel-value')
-            .addClass(overallClazz)
-            .append(function () {
-                var formatted
-                  , value
-                  , formatedValue
-                  , clazz;
-
-                value = !isCompare ? model.conversion : model.compare;
-                formatted = numeral(value).format('0.0');
-
-                if (isCompare) $(this).addClass('compare');
-                
-                if (!isOverall) {
-                    clazz = value < 0 ? 'minus' : 'plus';
-                    formatted = $('<span>').addClass(clazz).text(formatted);
-                }
-
-                return formatted
-            })
-            .append(function () {
-                var labels, label;
-                labels = self.options.labels || [];
-                label  = !isOverall ? labels[columnIndex - 1] : '';
-                return label || '';
-            })
-            .appendTo(el);
+        if (indexes.length > 0) {
+            ulEl = $('<ul>');
+            indexes.forEach(function (idx, i) {
+                $('<li>')
+                    .addClass('pill')
+                    .append($('<span>')
+                        .addClass('pill-color')
+                        .addClass(getColorNameByIndex(i)))
+                    .append($('<a>')
+                        .attr('href', 'javascript:void 0;')
+                        .text(self.options.names[idx]))
+                    .appendTo(ulEl);
+            });
+            containerEl.append(ulEl);
+        }
+        $('<ul>')
+            .addClass('options')
+            .append('<li>','<li>','<li>')
+            .appendTo(containerEl)
+            .on('click', function (e) {
+                e.stopPropagation();
+                self.open();
+            });
+        $(document).on('click', function () {
+            self.cancel();
+        });
+        this.$el.append(containerEl);
     }
 
-    function transformData2FunnelVizFormat (options) {
-        /*
-        {
-            name:       'Event Name',
-            value:      0, // Total
-            conversion: 0, // Total
-            compare:    0, // Total
-            sections: [
-                {
-                    value: 0,
-                }
-            ]
-        }
-        */
+    function _drawDialog () {
+        var self
+          , dialogEl
+          , bodyEl;
+
+        self = this;
+        dialogEl   = $('<div>').addClass('dropdown-pill-dialog');
+        dialogEl.append($('<div>').addClass('arrow-top-bg'))
+        dialogEl.append($('<div>').addClass('arrow-top'))
+
+        // Header
+        dialogEl.append($('<div>')
+            .addClass('dialog-group')
+            .addClass('dialog-group-title'));
         
-        var getTotalValue = function (index, timeFrame) {
-            var value = 0;
-            options.sections.forEach(function (section) {
-                value += section[timeFrame][index];
+        // Body
+        bodyEl = $('<ul>')
+            .addClass('dropdown-pill-list')
+            .addClass(function () {
+                return self.options.highlighted.length === 3 ? 'disabled' : '';
             });
-            return value;
-        }
+        self.options.names.forEach(function (name, i) {
+            $('<li>')
+                .append($('<a>')
+                    .addClass(function () {
+                        return self.isHighlighted(i) ? 'highlighted' : '';
+                    })
+                    .attr('href', 'javascript:void 0;')
+                    .append($('<span>')
+                        .addClass('pill-color')
+                        .addClass(function () {
+                            var colorIndex = self.options.highlighted.indexOf(i);
+                            return self.isHighlighted(i) ? getColorNameByIndex(colorIndex) : '';
+                        }))
+                    .append($('<span>').text(name))
+                    .on('click', function (e) {
+                        e.stopPropagation();
+                        if (bodyEl.hasClass('disabled') && !$(this).hasClass('highlighted')) return;
 
-        var getCompareValue = function (curr, prev) {
-            var a,b;
+                        _highlight.call(self, i);
+                    }))
+                .appendTo(bodyEl);
+        });
+        dialogEl.append(bodyEl);
 
-            a = getTotalValue(curr, 'compare');
-            b = getTotalValue(prev, 'compare');
-
-            return (b / a) * 100;
-        };
-
-        var getConversionValue = function (curr, prev) {
-            var a,b;
-            a = getTotalValue(curr, 'actual');
-            b = getTotalValue(prev, 'actual');
-            return (b / a) * 100;
-        };
-
-        var eventTotals = function (eventName, index) {
-            var a,b,c, curr, prev, isFirst, HBar, GHBar;
-            
-            isFirst = index === 0;
-            a = getTotalValue(index, 'actual');
-            
-            curr = index;
-            // First column always have an overall values
-            prev = isFirst ? options.events.length - 1 : index -1;
-            
-            c = getConversionValue(curr, prev);
-            b = c - getCompareValue(curr, prev);
-
-            HBar  = 100 - (a / getTotalValue(0, 'actual')) * 100;
-            GHBar = isFirst ? 0 : 100 - (getTotalValue(index - 1, 'actual') / getTotalValue(0, 'actual')) * 100;
-
-            return {
-                name:       eventName,
-                value:      a,
-                compare:    b,
-                conversion: c,
-                HBar:       HBar,  // The top shift(%) for the bar
-                GHBar:      GHBar  // The top shift(%) for the gray area behind the bar
-            };
-        };
-
-        var eventSections = function (index) {
-            var sections = [];
-                        
-            options.sections.forEach(function (s) {
-                var section, value, conv, HBar, GHBar, isFirst;
-
-                isFirst = index === 0;
-                value   = s.actual[index];
-                conv    = isFirst ? 0 : (s.actual[index] / s.actual[index - 1]) * 100;
-                HBar    = 100 - (value / s.actual[0]) * 100;
-                GHBar   = isFirst ? 0 : 100 - (s.actual[index - 1] / s.actual[0]) * 100;
-
-                section   = {};                
-                section.name  = s.name;
-                section.value = value;
-                section.conversion = conv;
-                section.HBar  = HBar;
-                section.GHBar = GHBar;
-                sections.push(section);
-            });
-
-            return sections;
-        };
-        
-        var transformedEvent = function (eventName, index) {
-            var obj = eventTotals(eventName, index);
-            obj.sections = eventSections(index);
-            return obj;
-        };
-
-        var events;
-        events = options.events.map(transformedEvent);
-        return events;
+        // Footer
+        $('<div>').addClass('dialog-group dialog-group-footer')
+            .append($('<a>')
+                .attr('href', 'javascript:void 0;')
+                .addClass('button button-disabled')
+                .text('Save'))
+            .append($('<a>')
+                .attr('href', 'javascript:void 0;')
+                .addClass('button')
+                .on('click', $.proxy(function () {
+                    this.cancel();
+                }, this))
+                .text('Cancel'))
+            .appendTo(dialogEl);
+        self.$el.append(dialogEl);
     }
 
-    function getBarColor(index) {
-        if (index === void 0) return this.options.barColorName + 'ish';
-        return (['green', 'red'][index] || 'yellow') + 'ish';
+    function _highlight (index) {
+        var slice
+          , bodyEl
+          , aEl
+          , colorIndex
+          , colorName;
+        
+        bodyEl = this.$el.find('.dropdown-pill-list');
+
+        colorIndex = this._highlighted.indexOf(index);
+
+        // The limit is reached
+        if (colorIndex == -1 && _cannotHighlight.call(this)) return;
+
+        if (bodyEl.hasClass('disabled')) bodyEl.removeClass('disabled');
+        
+        aEl = this.$el.find('.dropdown-pill-list a').eq(index);
+
+        // An item is highlighted already
+        if (colorIndex !== -1) {
+            this._highlighted[colorIndex] = -1;
+            
+            _unHighlightItem.call(this, index);
+        }
+        else {
+            colorIndex = this._highlighted.indexOf(-1) !== -1 ? this._highlighted.indexOf(-1) : this._highlighted.length;
+            this._highlighted[colorIndex] = index;
+            colorName = getColorNameByIndex(colorIndex);
+
+            _highlightItem.call(this, index, colorName);
+        }
+
+        _updateDialogHeader.call(this);
+
+        if (_isChangeMade.call(this)) {
+            _highlightSaveButton.call(this);
+        }
+        else {
+            _unHighlightSaveButton.call(this);
+        }
+
+        if (_cannotHighlight.call(this)) {
+            bodyEl.addClass('disabled');
+        }
+    }
+
+    function _updateDialogHeader() {
+        var source, message, count;
+        source = this._highlighted || this.options.highlighted;
+        
+        count = 0;
+        source.forEach(function (i) {
+            count += i !== -1 ? 1 : 0;
+        });
+        
+        message = ['You have 3 items to choice', 'You have 2 items left to choice', 'One more item'][count] || 'Limit reached';
+        this.$el.find('.dialog-group-title').text(message);
+    }
+
+    function _unHighlightItem (index) {
+        this.$el
+            .find('.dropdown-pill-list a')
+            .eq(index)
+            .removeClass('highlighted')
+            .find('.pill-color')
+            .removeClass('greenish redish yellowish');
+    }
+
+    function _highlightItem (index, colorName) {
+        this.$el
+            .find('.dropdown-pill-list a')
+            .eq(index)
+            .addClass('highlighted')
+            .find('.pill-color')
+            .addClass(colorName);
+    }
+
+    function _highlightSaveButton () {
+        this.$el
+            .find('.dialog-group-footer .button')
+            .first()
+            .removeClass('button-disabled')
+            .addClass('green');
+    }
+
+    function _unHighlightSaveButton () {
+        this.$el
+            .find('.dialog-group-footer .button')
+            .first()
+            .addClass('button-disabled')
+            .removeClass('green');
+    }
+
+    function _cannotHighlight () {
+        return this._highlighted.length === 3 && this._highlighted.indexOf(-1) === -1;
+    }
+
+    function _isChangeMade () {
+        var self, result;
+        self = this;
+        return !this.options.highlighted.every(function (a,i) {
+            return self._highlighted && self._highlighted[i] === a;
+        });
     }
 
     function Plugin (el, options) {
@@ -315,19 +249,46 @@
         this.options   = options;
         this._defaults = defaults;
         this._name     = pluginName;
-        // Holds a list of bars that were highlighted by a user
-        this.highlighted  = [];
+
         this.init();
     }
 
     Plugin.prototype = {
         init: function () {
-            init.apply(this);
+            _init.apply(this);
         },
 
-        isBreakdown: function () {
-            return $.isArray(this.options.breakdown);
+        isHighlighted: function (i) {
+            return this.options.highlighted.indexOf(i) !== -1;
         },
+
+        open: function () {
+            var slice = Array.prototype.slice;
+            if (!this._highlighted) this._highlighted = slice.call(this.options.highlighted);
+            this.$el
+                .find('.dropdown-pill-dialog')
+                .addClass('open');
+        },
+
+        cancel: function () {
+            var slice = Array.prototype.slice;
+            this._highlighted = slice.call(this.options.highlighted);
+
+            this.options.names.forEach($.proxy(function (n, index) {
+                if (this._highlighted.indexOf(index) !== -1) {
+                    _highlight.call(this, index);
+                } 
+                else {
+                    _unHighlightItem.call(this, index);
+                }
+            }, this));
+            
+            delete this._highlighted;
+
+            this.$el
+                .find('.dropdown-pill-dialog')
+                .removeClass('open');
+        }
     };
 
     $.fn[pluginName] = function (method) {

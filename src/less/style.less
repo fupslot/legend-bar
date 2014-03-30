@@ -8,8 +8,8 @@
 .dropdown-pills {
     position: relative;
     display: inline-block;
-    min-width: 156px;
     margin-right: 25px;
+    height: 24px;
     
     .dropdown-pills-container {
         ul {
@@ -80,6 +80,7 @@
         top: 34px;
         right: -25px;
         width: 244px;
+        z-index: 100;
         .arrow-top-bg {
             border-color: rgba(0, 0, 0, 0);
             border-bottom-color: #ccc;
@@ -128,27 +129,27 @@
                     text-decoration: none;
                     color: black;
                 }
-                .pill-color {
-                    display: inline-block;
-                    width: 13px;
-                    height: 13px;
-                    border: 1px solid #cecece;
-                    vertical-align: top;
-                    margin-right: 4px;
+                // .pill-color {
+                //     display: inline-block;
+                //     width: 13px;
+                //     height: 13px;
+                //     border: 1px solid #cecece;
+                //     vertical-align: top;
+                //     margin-right: 4px;
                 
-                    &.greenish,
-                    &.redish,
-                    &.yellowish {
-                        border: none;
-                        width: 14px;
-                        height: 14px;
-                    }
+                //     &.greenish,
+                //     &.redish,
+                //     &.yellowish {
+                //         border: none;
+                //         width: 14px;
+                //         height: 14px;
+                //     }
 
-                    &.greenish  { background-color: #4cb625; }
-                    &.redish    { background-color: #ef5500; }
-                    &.yellowish { background-color: #dde100; }
+                //     &.greenish  { background-color: #4cb625; }
+                //     &.redish    { background-color: #ef5500; }
+                //     &.yellowish { background-color: #dde100; }
 
-                }
+                // }
                 span {
                     vertical-align: top;
                     line-height: 16px;
@@ -160,11 +161,15 @@
             a:not(.highlighted) {
                 color: #c6c6c6;
                 cursor: default;
+
             }
-            .pill-color { border-color: transparent; }
+            .pill-color {
+                border-color: transparent;
+                box-shadow: none;
+            }
         }
     }
-    .button-group {
+    .dialog-group {
         background-color: #f8f8f8;
         padding: 10px;
         .button {
@@ -189,6 +194,11 @@
                 color: white;
                 &:hover {background-color: #68b133;}
             }
+            &.button-disabled {
+                color: #c6c6c6;
+                background-color: #e9e9e9;
+                cursor: default;
+            }
         }
     }
 
@@ -199,13 +209,15 @@
         border: 1px solid #cecece;
         vertical-align: top;
         margin-right: 4px;
+        box-shadow: inset 0 0 8px rgba(0,0,0,0.2);
     
         &.greenish,
         &.redish,
         &.yellowish {
+            box-shadow: none;
             border: none;
-            width: 14px;
-            height: 14px;
+            width: 15px;
+            height: 15px;
         }
 
         &.greenish  { background-color: #4cb625; }
