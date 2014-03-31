@@ -124,9 +124,9 @@
                 .removeClass('open');
 
             idxs = checkedList.map(function (item) {
-                return item.index;
+                return {idx:item.index, ci:item.colorIndex};
             });
-            
+
             this.$el.trigger('onChanged', [idxs]);
         },
 
