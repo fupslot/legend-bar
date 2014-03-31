@@ -358,6 +358,21 @@
             return list.filter(function (item) {
                 return !!item.checked;
             });
+        },
+
+        destroy: function () {
+            var el, obj;
+
+            el  = this.$el;
+            obj = el.data('plugin_'+pluginName);
+            if (obj !== void 0) {
+                el.off('select')
+                  .removeData('plugin_'+pluginName)
+                  .removeClass('dropdown-pills')
+                  .children().remove();
+            }
+
+
         }
     };
 
