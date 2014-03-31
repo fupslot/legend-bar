@@ -9,7 +9,7 @@ $(function () {
         
     };
 
-    $('#legend').DropdownPills(settings);
+    $('#legend').LegendBar(settings);
     $('#legend').on('select', function (e, list) {
         console.log(list);
     });

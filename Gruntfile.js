@@ -25,7 +25,7 @@ module.exports = function(grunt) {
     concat: {
       funnel: {
         src: ['src/js/plugin/**/*.*'],
-        dest: 'dist/Dropdown.js'
+        dest: 'dist/LegendBar.js'
       },
       app: {
         src: ['src/js/app/**/*.*'],
@@ -37,7 +37,7 @@ module.exports = function(grunt) {
       less: {
         options: { compile: true },
         src: ['src/less/style.less'],
-        dest: 'dist/style.css'
+        dest: 'dist/LegendBar.css'
       }
     },
 

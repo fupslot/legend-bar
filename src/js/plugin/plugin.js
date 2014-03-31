@@ -1,7 +1,7 @@
 ;(function($, window, document, undefined) {
     'use strict';
 
-    var pluginName = 'DropdownPills'
+    var pluginName = 'LegendBar'
       , defaults;
 
     defaults = {
@@ -18,7 +18,6 @@
         if (this.el.tagName !== 'DIV') throw Error('Dropdown. Error: The root element must be an DIV element');
 
         this.list = this._createCollection();
-        console.log(this.list);
 
         // Hide element. Privents blinking on slow machines.
         this.$el
