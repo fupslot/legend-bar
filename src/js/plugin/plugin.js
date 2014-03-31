@@ -111,7 +111,7 @@
         },
 
         save: function () {
-            var checkedList;
+            var checkedList, idxs;
 
             delete this._list;
             
@@ -122,7 +122,12 @@
             this.$el
                 .find('.dropdown-pill-dialog')
                 .removeClass('open');
-            this.$el.trigger('onChanged', [checkedList]);
+
+            idxs = checkedList.map(function (item) {
+                return item.index;
+            });
+            
+            this.$el.trigger('onChanged', [idxs]);
         },
 
         _createCollection: function () {
