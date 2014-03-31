@@ -8,7 +8,7 @@ $(function () {
     };
 
     $('#legend').LegendBar(settings);
-    $('#legend').on('select', function (e, list) {
+    $('#legend').on('onChanged', function (e, list) {
         console.log(list);
     });
 
@@ -17,7 +17,7 @@ $(function () {
     });
     $('#init').on('click', function () {
         $('#legend').LegendBar(settings);
-        $('#legend').on('select', function (e, list) {
+        $('#legend').on('onChanged', function (e, list) {
             console.log(list);
         });
     });

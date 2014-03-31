@@ -83,7 +83,6 @@
 
         open: function () {
             this._list = $.extend(true, [], this.list);
-            console.log(this.list);
             this.$el
                 .find('.dropdown-pill-dialog')
                 .addClass('open');
@@ -123,7 +122,7 @@
             this.$el
                 .find('.dropdown-pill-dialog')
                 .removeClass('open');
-            this.$el.trigger('select', [checkedList]);
+            this.$el.trigger('onChanged', [checkedList]);
         },
 
         _createCollection: function () {
@@ -366,7 +365,7 @@
             el  = this.$el;
             obj = el.data('plugin_'+pluginName);
             if (obj !== void 0) {
-                el.off('select')
+                el.off('onChanged')
                   .removeData('plugin_'+pluginName)
                   .removeClass('dropdown-pills')
                   .children().remove();
