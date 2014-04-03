@@ -321,7 +321,7 @@
             var list, message;
             list = this._getCheckedList(this.list);
             
-            message = ['You have 3 items to choice', 'You have 2 items left to choice', 'One more item'][list.length] || 'Limit reached';
+            message = ['You have 3 items to choose', 'You have 2 items to choose', 'One more item'][list.length] || 'Limit reached';
             this.$el.find('.dialog-group-title').text(message);
         },
 
